@@ -41,6 +41,7 @@ class Fmpl {
 	compile(str) {
 		// {% if $expression %} {% endif %}
 		// {% for $expression %} {% endfor %}
+		// {% while $expression %} {% endwhile %}
 		// {% block name %} {% endblock %}
 		// {% include '/path/to/file.txt' %}
 		// {{ expression }}
@@ -120,11 +121,15 @@ class Fmpl {
 							case 'if':
 								code += 'if ';
 								break;
+							case 'while':
+								code += 'while ';
+								break;
 							case 'for':
 								code += 'for ';
 								break;
 							case 'endif':
 							case 'endfor':
+							case 'endwhile':
 								code += '}\n';
 								break;
 							case 'endblock':
@@ -206,12 +211,14 @@ class Fmpl {
 								switch (state.value) {
 									case 'if':
 									case 'for':
+									case 'while':
 									case 'block':
 									case 'include':
 										pushState(scopes.verbatim);
 										break;
 									case 'endif':
 									case 'endfor':
+									case 'endwhile':
 									case 'endblock':
 										break;
 								}
@@ -231,6 +238,7 @@ class Fmpl {
 								switch (stateValue) {
 									case 'if':
 									case 'for':
+									case 'while':
 										pushState(scopes.expression);
 										break;
 									case 'include':
@@ -241,6 +249,7 @@ class Fmpl {
 										break;
 									case 'endif':
 									case 'endfor':
+									case 'endwhile':
 									case 'endblock':
 										pushState(scopes.endBlock);
 										break;

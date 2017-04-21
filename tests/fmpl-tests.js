@@ -38,6 +38,11 @@ describe('fmpl', () => {
 			.to.equal('0 yarp 1 yarp 2 yarp ');
 	});
 
+	it('should render while loop', () => {
+		expect(renderToString('{% while i-- %}{{ i }} yarp {% endwhile %}', { i: 3 }))
+			.to.equal('2 yarp 1 yarp 0 yarp ');
+	});
+
 	it('should render single block with content', () => {
 		const tmpl = 'foo {% block yarp %}bar{% endblock %}';
 		expect(renderToString(tmpl)).to.equal('foo bar');
