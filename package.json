@@ -1,0 +1,15 @@
+{
+	"name": "fmpl",
+	"version": "0.0.1",
+	"description": "fucking template engine",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/tmont/fmpl.git"
+	},
+
+	"devDependencies": {
+		"mocha": "3.2.0",
+		"expect.js": "0.3.1"
+	}
+}
