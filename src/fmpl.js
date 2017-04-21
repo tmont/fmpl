@@ -44,12 +44,14 @@ class Fmpl {
 		// {% while $expression %} {% endwhile %}
 		// {% block name %} {% endblock %}
 		// {% include '/path/to/file.txt' %}
-		// {{ expression }}
+		// {{- $expression }}
+		// {{ $expression }}
 
 		const scopes = {
 			tagBlockName: 'tagBlockName',
-			expression: 'expression',
+			blockExpression: 'blockExpression',
 			echoedExpression: 'echoedExpression',
+			nonEchoedExpression: 'nonEchoedExpression',
 			verbatim: 'verbatim',
 			includePath: 'includePath',
 			endBlock: 'endBlock',
@@ -99,7 +101,10 @@ class Fmpl {
 					case scopes.echoedExpression:
 						code += `__append(${state.value.trim()});\n`;
 						break;
-					case scopes.expression:
+					case scopes.nonEchoedExpression:
+						code += state.value.trim() + '\n';
+						break;
+					case scopes.blockExpression:
 						code += '(' + state.value.trim() + ') {\n';
 						break;
 					case scopes.includePath:
@@ -166,7 +171,12 @@ class Fmpl {
 								break;
 							case '{':
 								index++;
-								pushState(scopes.echoedExpression);
+								if (stringToParse.charAt(index + 1) === '-') {
+									index++;
+									pushState(scopes.nonEchoedExpression);
+								} else {
+									pushState(scopes.echoedExpression);
+								}
 								break;
 							default:
 								state.value += c;
@@ -178,7 +188,8 @@ class Fmpl {
 							throw new Error('expected %} but got }');
 						}
 
-						if (state.scope === scopes.echoedExpression && next === '}') {
+						if ((state.scope === scopes.echoedExpression || state.scope === scopes.nonEchoedExpression) &&
+							next === '}') {
 							index++;
 							popState();
 						} else {
@@ -198,7 +209,7 @@ class Fmpl {
 								pushState(scopes.verbatim);
 							}
 
-							if (state.scope === scopes.expression ||
+							if (state.scope === scopes.blockExpression ||
 								state.scope === scopes.blockName ||
 								state.scope === scopes.includePath ||
 								state.scope === scopes.endBlock) {
@@ -239,7 +250,7 @@ class Fmpl {
 									case 'if':
 									case 'for':
 									case 'while':
-										pushState(scopes.expression);
+										pushState(scopes.blockExpression);
 										break;
 									case 'include':
 										pushState(scopes.includePath);

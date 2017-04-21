@@ -27,6 +27,10 @@ describe('fmpl', () => {
 		expect(renderToString('{{ foo || (function() { return \'baz\'; })() }}', { foo: null })).to.equal('baz');
 	});
 
+	it('should allow code in expression', () => {
+		expect(renderToString('{{- var foo = \'bar\'; }}{{ foo }}')).to.equal('bar');
+	});
+
 	it('should render if statement', () => {
 		const tmpl = compile('{% if foo %}hello {% endif %}world');
 		expect(tmpl({ foo: true })).to.equal('hello world');
