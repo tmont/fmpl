@@ -3,6 +3,16 @@
 const fs = require('fs');
 const path = require('path');
 
+const varPrefix = '__';
+const varLocals = `${varPrefix}locals`;
+const varOptions = `${varPrefix}options`;
+const varTree = `${varPrefix}tree`;
+const varCurrentBlock = `${varPrefix}currentBlock`;
+const fnAppend = `${varPrefix}append`;
+const fnOpenBlock = `${varPrefix}openBlock`;
+const fnCloseBlock = `${varPrefix}closeBlock`;
+const fnRender = `${varPrefix}render`;
+
 class Fmpl {
 	constructor() {
 		this.templateResolvers = [];
@@ -58,8 +68,6 @@ class Fmpl {
 			blockName: 'blockName'
 		};
 
-		const varLocals = '$$locals';
-		const varOptions = '$$options';
 		let code = '';
 
 		const parse = (stringToParse) => {
@@ -95,11 +103,11 @@ class Fmpl {
 				switch (state.scope) {
 					case scopes.verbatim:
 						if (state.value) {
-							code += `__append(${JSON.stringify(state.value)});\n`;
+							code += `${fnAppend}(${JSON.stringify(state.value)});\n`;
 						}
 						break;
 					case scopes.echoedExpression:
-						code += `__append(${state.value.trim()});\n`;
+						code += `${fnAppend}(${state.value.trim()});\n`;
 						break;
 					case scopes.nonEchoedExpression:
 						code += state.value.trim() + '\n';
@@ -119,7 +127,7 @@ class Fmpl {
 						stringToParse = stringToParse.substring(0, index + 1) + includedResult + stringToParse.substring(index + 1);
 						break;
 					case scopes.blockName:
-						code += `__openBlock(${JSON.stringify(state.value.trim())});\n`;
+						code += `${fnOpenBlock}(${JSON.stringify(state.value.trim())});\n`;
 						break;
 					case scopes.tagBlockName:
 						switch (state.value) {
@@ -141,7 +149,7 @@ class Fmpl {
 								code += '}\n';
 								break;
 							case 'endblock':
-								code += '__closeBlock();\n';
+								code += `${fnCloseBlock}();\n`;
 								break;
 						}
 				}
@@ -274,24 +282,26 @@ class Fmpl {
 
 		parse(str);
 
-		console.log('\n--------------------');
-		console.log(code.trim());
-		console.log('--------------------');
+		// console.log('\n--------------------');
+		// console.log(code.trim());
+		// console.log('--------------------');
+
+
 		const funcDefinition = `
-var __tree = {};
-var __currentBlock = null;
-function __append(val) { 
-  __currentBlock.data.push(String(val));
+var ${varTree} = {};
+var ${varCurrentBlock} = null;
+function ${fnAppend}(val) { 
+  ${varCurrentBlock}.data.push(String(val));
 }
 
-function __openBlock(name) {
-  var current = __currentBlock || __tree;
+function ${fnOpenBlock}(name) {
+  var current = ${varCurrentBlock} || ${varTree};
   var append = name.charAt(0) === '+';
   name = append ? name.substring(1) : name;
   var block = current[name];
   if (!block) {
     block = current[name] = {
-      parent: __currentBlock || null,
+      parent: ${varCurrentBlock} || null,
       data: [], //contains either Strings or references to blocks
       children: {}
     };
@@ -302,38 +312,38 @@ function __openBlock(name) {
     block.data = [];
   }
   
-  if (__currentBlock) {
-    if (__currentBlock.data.indexOf(block) === -1) {
-      __currentBlock.data.push(block);
+  if (${varCurrentBlock}) {
+    if (${varCurrentBlock}.data.indexOf(block) === -1) {
+      ${varCurrentBlock}.data.push(block);
     }
   }
-  __currentBlock = block;
+  ${varCurrentBlock} = block;
 }
 
-function __closeBlock() {
-  __currentBlock = __currentBlock.parent;
+function ${fnCloseBlock}() {
+  ${varCurrentBlock} = ${varCurrentBlock}.parent;
 }
 
-function __render(item) {
+function ${fnRender}(item) {
   if (typeof(item) === 'string') {
     return item;
   }
   
   if (item.data) {
     //block
-    return __render(item.data);
+    return ${fnRender}(item.data);
   }
   
   //array
-  return item.map(__render).join('');
+  return item.map(${fnRender}).join('');
 }
 
-__openBlock('root');
+${fnOpenBlock}('root');
 with (${varLocals} || {}) {
 ${code};
 }
 
-return __render(__tree.root)`;
+return ${fnRender}(${varTree}.root)`;
 
 		return new Function(varLocals, varOptions, funcDefinition);
 	}
