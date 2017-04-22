@@ -3,6 +3,7 @@
 This is a template engine. 
 
 [![Build Status](https://travis-ci.org/tmont/fmpl.svg?branch=master)](https://travis-ci.org/tmont/fmpl)
+[![NPM version](https://img.shields.io/npm/v/fmpl.svg)](https://www.npmjs.com/package/fmpl)
 
 ## Naming
 It's like "tmpl", only with an "F" instead of a "T". Use your
