@@ -48,7 +48,7 @@ class Fmpl {
 		return null;
 	}
 
-	compile(str) {
+	compile(stringToParse) {
 		// {% if $expression %} {% else %} {% endif %}
 		// {% for $expression %} {% endfor %}
 		// {% while $expression %} {% endwhile %}
@@ -68,224 +68,215 @@ class Fmpl {
 			blockName: 'blockName'
 		};
 
+		const stateStack = [];
+
 		let code = '';
+		let c;
+		let index = 0;
+		let state = null;
+		let depth = 0;
 
-		const parse = (stringToParse) => {
-			let c;
-			let index = 0;
-
-			const stateStack = [];
-			let state = null;
-			let depth = 0;
-
-			const pushState = (newScope) => {
-				if (state && state.scope === scopes.verbatim) {
-					popState();
-				}
-
-				// console.log(' '.repeat(depth) + newScope);
-				depth++;
-
-				const newState = { scope: newScope, value: '' };
-				stateStack.push(newState);
-				state = newState;
-
-				switch (state.scope) {
-					case scopes.echoedExpression:
-						break;
-				}
-			};
-
-			const popState = () => {
-				depth--;
-				// console.log(' '.repeat(depth) + ':' + state.scope, state.value);
-
-				switch (state.scope) {
-					case scopes.verbatim:
-						if (state.value) {
-							code += `${fnAppend}(${JSON.stringify(state.value)});\n`;
-						}
-						break;
-					case scopes.echoedExpression:
-						code += `${fnAppend}(${state.value.trim()});\n`;
-						break;
-					case scopes.nonEchoedExpression:
-						code += state.value.trim() + '\n';
-						break;
-					case scopes.blockExpression:
-						code += '(' + state.value.trim() + ') {\n';
-						break;
-					case scopes.includePath:
-						const includePath = state.value.trim();
-						const includedResult = this.resolveTemplate(includePath);
-						if (!includedResult) {
-							throw new Error(`Unable to resolve template for include path "${includePath}"`);
-						}
-
-						//index + 1 to account for the closing "}"
-						//probably not the greatest, but it's okay to write garbage code if it's tested!
-						stringToParse = stringToParse.substring(0, index + 1) + includedResult + stringToParse.substring(index + 1);
-						break;
-					case scopes.blockName:
-						code += `${fnOpenBlock}(${JSON.stringify(state.value.trim())});\n`;
-						break;
-					case scopes.tagBlockName:
-						switch (state.value) {
-							case 'if':
-								code += 'if ';
-								break;
-							case 'else':
-								code += '} else {\n';
-								break;
-							case 'while':
-								code += 'while ';
-								break;
-							case 'for':
-								code += 'for ';
-								break;
-							case 'endif':
-							case 'endfor':
-							case 'endwhile':
-								code += '}\n';
-								break;
-							case 'endblock':
-								code += `${fnCloseBlock}();\n`;
-								break;
-						}
-				}
-
-				stateStack.pop();
-				if (!stateStack.length) {
-					stateStack.push({ scope: scopes.verbatim, value: '' });
-					depth = 1;
-				}
-
-				state = stateStack[stateStack.length - 1];
-			};
-
-			pushState(scopes.verbatim);
-
-			while (c = stringToParse.charAt(index)) {
-				const next = stringToParse.charAt(index + 1);
-				// console.log('char: "' + c + '"');
-
-				switch (c) {
-					case '{':
-						if (state.scope === scopes.endBlock) {
-							throw new Error('expected %} but got {');
-						}
-
-						switch (next) {
-							case '%':
-								index++;
-								pushState(scopes.tagBlockName);
-								break;
-							case '{':
-								index++;
-								if (stringToParse.charAt(index + 1) === '-') {
-									index++;
-									pushState(scopes.nonEchoedExpression);
-								} else {
-									pushState(scopes.echoedExpression);
-								}
-								break;
-							default:
-								state.value += c;
-								break;
-						}
-						break;
-					case '}':
-						if (state.scope === scopes.endBlock) {
-							throw new Error('expected %} but got }');
-						}
-
-						if ((state.scope === scopes.echoedExpression || state.scope === scopes.nonEchoedExpression) &&
-							next === '}') {
-							index++;
-							popState();
-						} else {
-							state.value += c;
-						}
-						break;
-					case '%':
-						if (next === '}') {
-							index++;
-							if (state.scope === scopes.verbatim) {
-								state.value += '%}';
-								break;
-							}
-
-							if (state.scope === scopes.endBlock) {
-								popState();
-								pushState(scopes.verbatim);
-							}
-
-							if (state.scope === scopes.blockExpression ||
-								state.scope === scopes.blockName ||
-								state.scope === scopes.includePath ||
-								state.scope === scopes.endBlock) {
-								popState();
-								pushState(scopes.verbatim);
-							}
-						} else if (state.scope === scopes.endBlock) {
-							throw new Error('expected %} but got %' + next);
-						} else {
-							state.value += '%';
-						}
-						break;
-					default:
-						if (state.scope === scopes.tagBlockName && /\s/.test(c)) {
-							state.value = state.value.trim();
-							if (state.value) {
-								const stateValue = state.value;
-								popState();
-								switch (stateValue) {
-									case 'if':
-									case 'for':
-									case 'while':
-										pushState(scopes.blockExpression);
-										break;
-									case 'include':
-										pushState(scopes.includePath);
-										break;
-									case 'block':
-										pushState(scopes.blockName);
-										break;
-									case 'endif':
-									case 'endfor':
-									case 'endwhile':
-									case 'endblock':
-									case 'else':
-										pushState(scopes.endBlock);
-										break;
-									default:
-										throw new Error('Unknown tag: "' + stateValue + '"');
-								}
-							}
-						} else if (state.scope === scopes.endBlock) {
-							if (!/\s/.test(c)) {
-								throw new Error('expected %} but got "' + c + '"');
-							}
-						} else {
-							state.value += c;
-						}
-						break;
-				}
-
-				index++;
+		const pushState = (newScope) => {
+			if (state && state.scope === scopes.verbatim) {
+				popState();
 			}
 
-			if (state.value) {
-				popState();
+			// console.log(' '.repeat(depth) + newScope);
+			depth++;
+
+			const newState = { scope: newScope, value: '' };
+			stateStack.push(newState);
+			state = newState;
+
+			switch (state.scope) {
+				case scopes.echoedExpression:
+					break;
 			}
 		};
 
-		parse(str);
+		const popState = () => {
+			depth--;
+			// console.log(' '.repeat(depth) + ':' + state.scope, state.value);
 
-		// console.log('\n--------------------');
-		// console.log(code.trim());
-		// console.log('--------------------');
+			switch (state.scope) {
+				case scopes.verbatim:
+					if (state.value) {
+						code += `${fnAppend}(${JSON.stringify(state.value)});\n`;
+					}
+					break;
+				case scopes.echoedExpression:
+					code += `${fnAppend}(${state.value.trim()});\n`;
+					break;
+				case scopes.nonEchoedExpression:
+					code += state.value.trim() + '\n';
+					break;
+				case scopes.blockExpression:
+					code += '(' + state.value.trim() + ') {\n';
+					break;
+				case scopes.includePath:
+					const includePath = state.value.trim();
+					const includedResult = this.resolveTemplate(includePath);
+					if (!includedResult) {
+						throw new Error(`Unable to resolve template for include path "${includePath}"`);
+					}
 
+					//index + 1 to account for the closing "}"
+					//probably not the greatest, but it's okay to write garbage code if it's tested!
+					stringToParse = stringToParse.substring(0, index + 1) +
+						includedResult +
+						stringToParse.substring(index + 1);
+					break;
+				case scopes.blockName:
+					code += `${fnOpenBlock}(${JSON.stringify(state.value.trim())});\n`;
+					break;
+				case scopes.tagBlockName:
+					switch (state.value) {
+						case 'if':
+							code += 'if ';
+							break;
+						case 'else':
+							code += '} else {\n';
+							break;
+						case 'while':
+							code += 'while ';
+							break;
+						case 'for':
+							code += 'for ';
+							break;
+						case 'endif':
+						case 'endfor':
+						case 'endwhile':
+							code += '}\n';
+							break;
+						case 'endblock':
+							code += `${fnCloseBlock}();\n`;
+							break;
+					}
+			}
+
+			stateStack.pop();
+			if (!stateStack.length) {
+				stateStack.push({ scope: scopes.verbatim, value: '' });
+				depth = 1;
+			}
+
+			state = stateStack[stateStack.length - 1];
+		};
+
+		pushState(scopes.verbatim);
+
+		while (c = stringToParse.charAt(index)) {
+			const next = stringToParse.charAt(index + 1);
+
+			switch (c) {
+				case '{':
+					if (state.scope === scopes.endBlock) {
+						throw new Error('expected %} but got {');
+					}
+
+					switch (next) {
+						case '%':
+							index++;
+							pushState(scopes.tagBlockName);
+							break;
+						case '{':
+							index++;
+							if (stringToParse.charAt(index + 1) === '-') {
+								index++;
+								pushState(scopes.nonEchoedExpression);
+							} else {
+								pushState(scopes.echoedExpression);
+							}
+							break;
+						default:
+							state.value += c;
+							break;
+					}
+					break;
+				case '}':
+					if (state.scope === scopes.endBlock) {
+						throw new Error('expected %} but got }');
+					}
+
+					if ((state.scope === scopes.echoedExpression || state.scope === scopes.nonEchoedExpression) &&
+						next === '}') {
+						index++;
+						popState();
+					} else {
+						state.value += c;
+					}
+					break;
+				case '%':
+					if (next === '}') {
+						index++;
+						if (state.scope === scopes.verbatim) {
+							state.value += '%}';
+							break;
+						}
+
+						if (state.scope === scopes.endBlock) {
+							popState();
+							pushState(scopes.verbatim);
+						}
+
+						if (state.scope === scopes.blockExpression ||
+							state.scope === scopes.blockName ||
+							state.scope === scopes.includePath ||
+							state.scope === scopes.endBlock) {
+							popState();
+							pushState(scopes.verbatim);
+						}
+					} else if (state.scope === scopes.endBlock) {
+						throw new Error('expected %} but got %' + next);
+					} else {
+						state.value += '%';
+					}
+					break;
+				default:
+					if (state.scope === scopes.tagBlockName && /\s/.test(c)) {
+						state.value = state.value.trim();
+						if (state.value) {
+							const stateValue = state.value;
+							popState();
+							switch (stateValue) {
+								case 'if':
+								case 'for':
+								case 'while':
+									pushState(scopes.blockExpression);
+									break;
+								case 'include':
+									pushState(scopes.includePath);
+									break;
+								case 'block':
+									pushState(scopes.blockName);
+									break;
+								case 'endif':
+								case 'endfor':
+								case 'endwhile':
+								case 'endblock':
+								case 'else':
+									pushState(scopes.endBlock);
+									break;
+								default:
+									throw new Error('Unknown tag: "' + stateValue + '"');
+							}
+						}
+					} else if (state.scope === scopes.endBlock) {
+						if (!/\s/.test(c)) {
+							throw new Error('expected %} but got "' + c + '"');
+						}
+					} else {
+						state.value += c;
+					}
+					break;
+			}
+
+			index++;
+		}
+
+		if (state.value) {
+			popState();
+		}
 
 		const funcDefinition = `
 var ${varTree} = {};
@@ -340,7 +331,7 @@ function ${fnRender}(item) {
 
 ${fnOpenBlock}('root');
 with (${varLocals} || {}) {
-${code};
+${code}
 }
 
 return ${fnRender}(${varTree}.root)`;
