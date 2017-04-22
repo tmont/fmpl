@@ -48,6 +48,12 @@ describe('fmpl', () => {
 			.to.equal('0 yarp 1 yarp 2 yarp ');
 	});
 
+	it('should render for..in loop', () => {
+		const tmpl = '{% for var fruit in fruits %}{{ fruit }} are {{ fruits[fruit] }} {% endfor %}';
+		expect(renderToString(tmpl, {fruits: {apples: 'red', bananas: 'yellow'}}))
+			.to.equal('apples are red bananas are yellow ');
+	});
+
 	it('should render while loop', () => {
 		expect(renderToString('{% while i-- %}{{ i }} yarp {% endwhile %}', { i: 3 }))
 			.to.equal('2 yarp 1 yarp 0 yarp ');
