@@ -19,12 +19,16 @@ Options
 Brief syntax overview:
 
 {{ expression }}                     echo the result of a JavaScript expression
-{{- expression }}                    execute a JavaScript expression
+{{- expression }}                    same as above, trim previous whitespace
+{$ expression $}                     execute a JavaScript expression
+{$- expression $}                    same as above, trim previous whitespace
 {% if expression %}{% endif %}       basic if statement
 {% for expression %}{% endfor %}     basic for loop
 {% while expression %}{% endwhile %} basic while loop
 {% block name %}{% endblock %}       create a block
 {% include name %}                   include another template
+
+Append "-" to any of the above opening tags will trim previous whitespace.
 
 Returns 0 if it worked, 1 if it didn't.
 `;

@@ -65,7 +65,7 @@ Options
 Brief syntax overview:
 
 {{ expression }}                     echo the result of a JavaScript expression
-{{- expression }}                    execute a JavaScript expression
+{$ expression $}                     execute a JavaScript expression
 {% if expression %}{% endif %}       basic if statement
 {% for expression %}{% endfor %}     basic for loop
 {% while expression %}{% endwhile %} basic while loop
@@ -76,8 +76,9 @@ Returns 0 if it worked, 1 if it didn't.
 ```
 
 ## Template Syntax
-Quick and dirty: variables are in `{{ }}`, everything else is in
-`{% %}`. Parentheses around if/else/for/while expressions are optional and discouraged.
+Quick and dirty: variables are in `{{ }}`, code is in `{$ $}`, everything else is in
+`{% %}`. Parentheses around if/else/for/while expressions are optional.
+Trim previous whitespace with `-`, e.g. `{{- }}` or `{%- %}`.
 
 ### Variables/expressions
 Any JavaScript expression can can be interpolated
@@ -97,9 +98,9 @@ Fmpl.render(tmpl); //Hello yarp
 ### Arbitrary code
 Sometimes you just want to set a variable or something.
 
-`{{-` is the same as `{{` except that it won't echo the result.
+`{$` is the same as `{{` except that it won't echo the result.
 ```javascript
-const tmpl = '{{- var name = \'yarp\'; }}Hello {{ name }}';
+const tmpl = '{$ var name = \'yarp\'; $}Hello {{ name }}';
 Fmpl.render(tmpl); //Hello yarp
 ```
 
@@ -132,7 +133,7 @@ Fmpl.render(tmpl, { fruits: { apples: 'red', bananas: 'yellow' }}); //apples are
 Parentheses are optional
 
 ```javascript
-const tmpl = '{{- var i = 0; }}{% while i < 3 %}{{ String.fromCharCode(i + 65) }}{{- i++ }} {% endwhile %}';
+const tmpl = '{$ var i = 0; $}{% while i < 3 %}{{ String.fromCharCode(i + 65) }}{$ i++ $} {% endwhile %}';
 Fmpl.render(tmpl); //A B C
 ```
 
@@ -236,4 +237,4 @@ in your template (e.g. in an `if` statement) is inserted verbatim and will
 throw syntax errors if it sucks.
 
 Variables for internal use are prefixed with `____` (four underscores) so if you
-do something like `{{- ____render = null; }}` nothing will work. Try not do that.
+do something like `{$ ____render = null; $}` nothing will work. Try not do that.

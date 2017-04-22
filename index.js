@@ -12,6 +12,7 @@ const fnAppend = `${varPrefix}append`;
 const fnOpenBlock = `${varPrefix}openBlock`;
 const fnCloseBlock = `${varPrefix}closeBlock`;
 const fnRender = `${varPrefix}render`;
+const fnTrim = `${varPrefix}trim`;
 
 class Fmpl {
 	constructor() {
@@ -176,16 +177,25 @@ class Fmpl {
 
 					switch (next) {
 						case '%':
-							index++;
-							pushState(scopes.tagBlockName);
-							break;
+						case '$':
 						case '{':
 							index++;
+
+							switch (next) {
+								case '%':
+									pushState(scopes.tagBlockName);
+									break;
+								case '$':
+									pushState(scopes.nonEchoedExpression);
+									break;
+								case '{':
+									pushState(scopes.echoedExpression);
+									break;
+							}
+
 							if (stringToParse.charAt(index + 1) === '-') {
 								index++;
-								pushState(scopes.nonEchoedExpression);
-							} else {
-								pushState(scopes.echoedExpression);
+								code += `${fnTrim}();\n`;
 							}
 							break;
 						default:
@@ -193,13 +203,24 @@ class Fmpl {
 							break;
 					}
 					break;
+				case '$':
+					if (state.scope === scopes.endBlock) {
+						throw new Error('expected %} but got $');
+					}
+
+					if (state.scope === scopes.nonEchoedExpression && next === '}') {
+						index++;
+						popState();
+					} else {
+						state.value += c;
+					}
+					break;
 				case '}':
 					if (state.scope === scopes.endBlock) {
 						throw new Error('expected %} but got }');
 					}
 
-					if ((state.scope === scopes.echoedExpression || state.scope === scopes.nonEchoedExpression) &&
-						next === '}') {
+					if (state.scope === scopes.echoedExpression && next === '}') {
 						index++;
 						popState();
 					} else {
@@ -329,12 +350,28 @@ function ${fnRender}(item) {
   return item.map(${fnRender}).join('');
 }
 
+function ${fnTrim}() {
+  var data = ${varCurrentBlock}.data;
+  for (var i = data.length - 1; i >= 0; i--) {
+    var value = data[i];
+    if (typeof(value) !== 'string') {
+      break;
+    }
+    
+    value = value.replace(/\\s+$/, '');
+    data[i] = value;
+    if (value) {
+      break;
+    }
+  }
+}
+
 ${fnOpenBlock}('root');
 with (${varLocals} || {}) {
 ${code}
 }
 
-return ${fnRender}(${varTree}.root)`;
+return ${fnRender}(${varTree}.root);`;
 
 		return new Function(varLocals, varOptions, funcDefinition);
 	}

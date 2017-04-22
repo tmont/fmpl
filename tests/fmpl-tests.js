@@ -32,7 +32,7 @@ describe('fmpl', () => {
 	});
 
 	it('should allow code in expression', () => {
-		expect(renderToString('{{- var foo = \'bar\'; }}{{ foo }}')).to.equal('bar');
+		expect(renderToString('{$ var foo = \'bar\'; $}{{ foo }}')).to.equal('bar');
 	});
 
 	it('should render if statement', () => {
@@ -146,6 +146,13 @@ describe('fmpl', () => {
 		});
 	});
 
+	it('should blow up if "$" occurs at the end of a tag block', () => {
+		const text = '{% endif $ %}';
+		expect(() => fmpl.compile(text)).to.throwError((err) => {
+			expect(err).to.have.property('message', 'expected %} but got $');
+		});
+	});
+
 	it('should blow up if "%" occurs at the end of a tag block without a following "}"', () => {
 		const text = '{% endif % %}';
 		expect(() => fmpl.compile(text)).to.throwError((err) => {
@@ -167,12 +174,17 @@ describe('fmpl', () => {
 		});
 	});
 
-	it('should allow percent sign in verbatim', () => {
+	it('should allow % in verbatim', () => {
 		const text = '100%';
 		expect(renderToString(text)).to.equal('100%');
 	});
 
-	it('should allow whitespace occurs before tag end', () => {
+	it('should allow $ in verbatim', () => {
+		const text = '$100';
+		expect(renderToString(text)).to.equal('$100');
+	});
+
+	it('should allow whitespace before tag end', () => {
 		const text = '{% if true %}{% endif \n\t  %}';
 		expect(renderToString(text)).to.equal('');
 	});
@@ -201,6 +213,45 @@ describe('fmpl', () => {
 			expect(err).to.not.be(null);
 			expect(tmpl).to.not.be.ok();
 			done();
+		});
+	});
+
+	describe('whitespace trimming', () => {
+		it('should trim whitespace for non-echoed expression', () => {
+			expect(renderToString('   {$- var foo = \'bar\'; $}{{ foo }}')).to.equal('bar');
+		});
+
+		it('should trim whitespace for echoed expression', () => {
+			expect(renderToString('   {{- "bar" }}')).to.equal('bar');
+		});
+
+		it('should trim whitespace for if statement', () => {
+			expect(renderToString('   {%- if true %}bar{% endif %}')).to.equal('bar');
+		});
+
+		it('should trim whitespace for for loop', () => {
+			expect(renderToString('   {%- for var i = 0; i < 1; i++ %}bar{% endfor %}')).to.equal('bar');
+		});
+
+		it('should trim whitespace for while loop', () => {
+			expect(renderToString('   {%- while true %}bar{$ break; $}{% endwhile %}')).to.equal('bar');
+		});
+
+		it('should trim whitespace for block', () => {
+			expect(renderToString('   {%- block content %}bar{% endblock %}')).to.equal('bar');
+		});
+
+		it('should not trim whitespace if previous thing was a block', () => {
+			expect(renderToString('{% block content %}bar {% endblock %}{$- $}')).to.equal('bar ');
+		});
+
+		it('should trim whitespace for closing block tag', () => {
+			expect(renderToString('{% block content %}bar {%- endblock %}')).to.equal('bar');
+		});
+
+		it('should trim whitespace for include', () => {
+			const file = path.join(__dirname, 'includes', 'yarp.txt');
+			expect(renderToString(`   {%- include ${file} %}`)).to.equal('yarp\n');
 		});
 	});
 });
