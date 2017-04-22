@@ -61,6 +61,7 @@ Options
 
 --verbose|-v                         show debugging messages
 --help|-g                            show this message
+--render json                        compile and render the template
 
 Brief syntax overview:
 
@@ -71,6 +72,8 @@ Brief syntax overview:
 {% while expression %}{% endwhile %} basic while loop
 {% block name %}{% endblock %}       create a block
 {% include name %}                   include another template
+
+Append "-" to any of the above opening tags will trim previous whitespace.
 
 Returns 0 if it worked, 1 if it didn't.
 ```

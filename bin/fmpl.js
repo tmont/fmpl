@@ -15,13 +15,12 @@ Options
 
 --verbose|-v                         show debugging messages
 --help|-g                            show this message
+--render json                        compile and render the template
 
 Brief syntax overview:
 
 {{ expression }}                     echo the result of a JavaScript expression
-{{- expression }}                    same as above, trim previous whitespace
 {$ expression $}                     execute a JavaScript expression
-{$- expression $}                    same as above, trim previous whitespace
 {% if expression %}{% endif %}       basic if statement
 {% for expression %}{% endfor %}     basic for loop
 {% while expression %}{% endwhile %} basic while loop
@@ -41,6 +40,8 @@ function showUsage() {
 const args = process.argv.slice(2);
 let files = [];
 let verbose = false;
+let render = false;
+let renderData = {};
 
 for (let i = 0; i < args.length; i++) {
 	switch (args[i]) {
@@ -51,6 +52,15 @@ for (let i = 0; i < args.length; i++) {
 		case '--verbose':
 		case '-v':
 			verbose = true;
+			break;
+		case '--render':
+			render = true;
+			try {
+				renderData = JSON.parse(args[i + 1]);
+				i++;
+			} catch (e) {
+				exit(e);
+			}
 			break;
 		default:
 			files.push(args[i]);
@@ -75,8 +85,8 @@ const fmpl = new Fmpl();
 function compileAndEmit(text, callback) {
 	let tmpl;
 	try {
-		const start = Date.now();
 		verbose && console.error(`compiling template (len=${text.length})...`);
+		const start = Date.now();
 		tmpl = fmpl.compile(text);
 		verbose && console.error(`finished compiling in ${Date.now() - start}ms`);
 	} catch (e) {
@@ -84,7 +94,22 @@ function compileAndEmit(text, callback) {
 		return;
 	}
 
-	console.log(tmpl.toString());
+	if (render) {
+		verbose && console.error(`rendering template with data`, renderData);
+		try {
+			const start = Date.now();
+			const rendered = tmpl(renderData);
+			verbose && console.error(`rendered template in ${Date.now() - start}ms`);
+			console.log(rendered);
+		} catch (e) {
+			console.error('failed to render template');
+			exit(e);
+		}
+
+	} else {
+		console.log(tmpl.toString());
+	}
+
 	callback();
 }
 
