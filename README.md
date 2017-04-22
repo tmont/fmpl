@@ -2,6 +2,8 @@
 
 This is a template engine. 
 
+[![Build Status](https://travis-ci.org/tmont/fmpl.svg?branch=master)](https://travis-ci.org/tmont/fmpl)
+
 ## Naming
 It's like "tmpl", only with an "F" instead of a "T". Use your
 funning imagination to figure out what the "F" stands for.
