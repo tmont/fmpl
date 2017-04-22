@@ -14,8 +14,8 @@
 	},
 
 	"files": [
-		"./bin/fmpl.js",
-		"./index.js"
+		"bin/fmpl.js",
+		"index.js"
 	],
 
 	"scripts": {
