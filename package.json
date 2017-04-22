@@ -2,6 +2,7 @@
 	"name": "fmpl",
 	"version": "0.0.1",
 	"description": "fucking template engine",
+	"keywords": [ "template", "engine" ],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
