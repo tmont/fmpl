@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const varPrefix = '__';
+const varPrefix = '____';
 const varLocals = `${varPrefix}locals`;
 const varOptions = `${varPrefix}options`;
 const varTree = `${varPrefix}tree`;

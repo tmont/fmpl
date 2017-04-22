@@ -221,5 +221,5 @@ creates a callable function using the `Function` constructor. Code you write
 in your template (e.g. in an `if` statement) is inserted verbatim and will
 throw syntax errors if it sucks.
 
-Variables for internal use are prefixed with `__` (two underscores) so if you
-do something like `{{- __render = null; }}` nothing will work. Try not do that.
+Variables for internal use are prefixed with `____` (four underscores) so if you
+do something like `{{- ____render = null; }}` nothing will work. Try not do that.
