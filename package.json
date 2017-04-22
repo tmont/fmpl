@@ -8,6 +8,14 @@
 		"url": "https://github.com/tmont/fmpl.git"
 	},
 
+	"bin": {
+		"fmpl": "./bin/fmpl.js"
+	},
+
+	"files": [
+		"index.js"
+	],
+
 	"scripts": {
 		"test": "node_modules/.bin/mocha -R dot --recursive tests",
 		"coverage": "node_modules/.bin/nyc --include index.js --all --reporter=html --reporter=text node_modules/.bin/mocha -R dot --recursive tests"

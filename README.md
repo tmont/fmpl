@@ -32,6 +32,35 @@ console.log(fn({ dem: 'vars' }));
 console.log(Fmpl.render(someTemplateString, { dem: 'vars' }));
 ```
 
+### From the command line
+`fmpl` comes with a cli utility called `fmpl`. Run it from `node_modules/.bin/fmpl`.
+
+```
+fmpl [--verbose|-v] [--help|-h] [file] [file...]
+
+fmpl is a fucking template engine that accepts a file and spits out a 
+stringified JavaScript function to stdout. If no file is specified
+then it reads from stdin. If "-" is given for the filename it will read
+from stdin.
+
+Options
+
+--verbose|-v                         show debugging messages
+--help|-g                            show this message
+
+Brief syntax overview:
+
+{{ expression }}                     echo the result of a JavaScript expression
+{{- expression }}                    execute a JavaScript expression
+{% if expression %}{% endif %}       basic if statement
+{% for expression %}{% endfor %}     basic for loop
+{% while expression %}{% endwhile %} basic while loop
+{% block name %}{% endblock %}       create a block
+{% include name %}                   include another template
+
+Returns 0 if it worked, 1 if it didn't.
+```
+
 ## Template Syntax
 Quick and dirty: variables are in `{{ }}`, everything else is in
 `{% %}`. Parentheses around if/else/for/while expressions are optional and discouraged.
