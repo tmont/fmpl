@@ -17,12 +17,19 @@ const fnTrim = `${varPrefix}trim`;
 class Fmpl {
 	constructor() {
 		this.templateResolvers = [];
-		this.defaultResolver = (name) => {
-			try {
-				return fs.readFileSync(name, { encoding: 'utf8' });
-			} catch (e) {
-				return null;
+		this.defaultResolver = (name, filename) => {
+			const files = [ name ];
+			if (filename && !path.isAbsolute(name)) {
+				files.unshift(path.resolve(path.join(path.dirname(filename), name)));
 			}
+
+			for (let i = 0; i < files.length; i++) {
+				try {
+					return fs.readFileSync(files[i], { encoding: 'utf8' });
+				} catch (e) {}
+			}
+
+			return null;
 		};
 	}
 
@@ -30,7 +37,7 @@ class Fmpl {
 		this.templateResolvers.push(handler);
 	}
 
-	resolveTemplate(name) {
+	resolveTemplate(name, filename) {
 		const resolvers = this.templateResolvers.concat([]);
 		if (!resolvers.length) {
 			if (this.defaultResolver) {
@@ -40,7 +47,7 @@ class Fmpl {
 
 		for (let i = 0; i < resolvers.length; i++) {
 			const handler = resolvers[i];
-			const result = handler(name);
+			const result = handler(name, filename);
 			if (result) {
 				return result;
 			}
@@ -49,7 +56,7 @@ class Fmpl {
 		return null;
 	}
 
-	compile(stringToParse) {
+	compile(stringToParse, filename) {
 		// {% if $expression %} {% else %} {% endif %}
 		// {% for $expression %} {% endfor %}
 		// {% while $expression %} {% endwhile %}
@@ -116,7 +123,7 @@ class Fmpl {
 					break;
 				case scopes.includePath:
 					const includePath = state.value.trim();
-					const includedResult = this.resolveTemplate(includePath);
+					const includedResult = this.resolveTemplate(includePath, filename);
 					if (!includedResult) {
 						throw new Error(`Unable to resolve template for include path "${includePath}"`);
 					}
@@ -385,7 +392,7 @@ return ${fnRender}(${varTree}.root);`;
 
 			let result, error = null;
 			try {
-				result = this.compile(contents);
+				result = this.compile(contents, file);
 			} catch (e) {
 				error = e;
 			}

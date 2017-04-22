@@ -198,6 +198,15 @@ describe('fmpl', () => {
 		});
 	});
 
+	it('should compile from file and use filename for includes', (done) => {
+		const file = path.join(__dirname, 'includes', 'includes-yarp.txt');
+		fmpl.compileFile(file, (err, tmpl) => {
+			expect(err).to.be(null);
+			expect(tmpl()).to.equal('yarp\n\n');
+			done();
+		});
+	});
+
 	it('should compile from file and handle compilation error', (done) => {
 		const file = path.join(__dirname, 'includes', 'bad.txt');
 		fmpl.compileFile(file, (err, tmpl) => {

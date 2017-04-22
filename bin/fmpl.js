@@ -82,12 +82,12 @@ function exit(err) {
 
 const fmpl = new Fmpl();
 
-function compileAndEmit(text, callback) {
+function compileAndEmit(text, filename, callback) {
 	let tmpl;
 	try {
 		verbose && console.error(`compiling template (len=${text.length})...`);
 		const start = Date.now();
-		tmpl = fmpl.compile(text);
+		tmpl = fmpl.compile(text, filename);
 		verbose && console.error(`finished compiling in ${Date.now() - start}ms`);
 	} catch (e) {
 		callback(e);
@@ -121,7 +121,7 @@ if (!files.length) {
 		templateText += chunk;
 	});
 	process.stdin.on('end', () => {
-		compileAndEmit(templateText, exit);
+		compileAndEmit(templateText, null, exit);
 	});
 	return;
 }
@@ -140,7 +140,7 @@ function compile(index) {
 			return;
 		}
 
-		compileAndEmit(text, (err) => {
+		compileAndEmit(text, file, (err) => {
 			if (err) {
 				exit(err);
 				return;

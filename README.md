@@ -196,6 +196,11 @@ else I'll kill your family. Not really though.
 By default, included templates are resolved assuming they are file names. If this isn't ideal,
 you can create your own resolver and load it into the `Fmpl` instance.
 
+The default filename resolver is very simple and kinda stupid. If the include path is not
+absolute, it searches relatively from the __original__ file path (if available). So if you
+have doubly nested templates that include relative templates from different directories,
+you may run into issues. Easiest solution is to simply use your own resolver.
+
 If an included template cannot be resolved, an error will be thrown.
 
 ```javascript
