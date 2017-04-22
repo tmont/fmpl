@@ -39,7 +39,7 @@ class Fmpl {
 	}
 
 	compile(str) {
-		// {% if $expression %} {% endif %}
+		// {% if $expression %} {% else %} {% endif %}
 		// {% for $expression %} {% endfor %}
 		// {% while $expression %} {% endwhile %}
 		// {% block name %} {% endblock %}
@@ -125,6 +125,9 @@ class Fmpl {
 						switch (state.value) {
 							case 'if':
 								code += 'if ';
+								break;
+							case 'else':
+								code += '} else {\n';
 								break;
 							case 'while':
 								code += 'while ';
@@ -225,6 +228,7 @@ class Fmpl {
 									case 'while':
 									case 'block':
 									case 'include':
+									case 'else':
 										pushState(scopes.verbatim);
 										break;
 									case 'endif':
@@ -262,6 +266,7 @@ class Fmpl {
 									case 'endfor':
 									case 'endwhile':
 									case 'endblock':
+									case 'else':
 										pushState(scopes.endBlock);
 										break;
 									default:

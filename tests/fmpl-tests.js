@@ -37,6 +37,12 @@ describe('fmpl', () => {
 		expect(tmpl({ foo: false })).to.equal('world');
 	});
 
+	it('should render else statement', () => {
+		const tmpl = compile('{% if foo %}hello{% else %}goodbye{% endif %} world');
+		expect(tmpl({foo: true})).to.equal('hello world');
+		expect(tmpl({foo: false})).to.equal('goodbye world');
+	});
+
 	it('should render for loop', () => {
 		expect(renderToString('{% for var i = 0; i < 3; i++ %}{{ i }} yarp {% endfor %}'))
 			.to.equal('0 yarp 1 yarp 2 yarp ');
