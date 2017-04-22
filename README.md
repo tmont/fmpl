@@ -19,6 +19,20 @@ This solves a singular goal. That goal is to precompile templates
 into an independent callable function. Only pug/ejs seem to do that
 but pug is for HTML and ejs doesn't support template inheritance.
 
+This library is NOT:
+
+- asynchronous
+- super serious
+- recommended for use in production
+
+I mean, it works, and the tests pass (100% coverage), but the parser is
+kinda naive and you can jam it up if you try really hard. I use it for
+precompiling HTML email templates. I wouldn't recommend it as a replacement
+for a more "real" template engine like pug, ejs, nunjucks or dust. 
+
+If you want minimal dependencies and standalone precompilation, this is the 
+library for you.
+
 ## Usage
 ```javascript
 const Fmpl = require('fmpl');
