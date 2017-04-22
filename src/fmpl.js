@@ -219,25 +219,6 @@ class Fmpl {
 								popState();
 								pushState(scopes.verbatim);
 							}
-
-							if (state.scope === scopes.tagBlockName) {
-								popState();
-								switch (state.value) {
-									case 'if':
-									case 'for':
-									case 'while':
-									case 'block':
-									case 'include':
-									case 'else':
-										pushState(scopes.verbatim);
-										break;
-									case 'endif':
-									case 'endfor':
-									case 'endwhile':
-									case 'endblock':
-										break;
-								}
-							}
 						} else if (state.scope === scopes.endBlock) {
 							throw new Error('expected %} but got %' + next);
 						} else {
@@ -371,7 +352,7 @@ return __render(__tree.root)`;
 				error = e;
 			}
 
-			callback(err, error ? null : result);
+			callback(error, error ? null : result);
 		});
 	}
 }

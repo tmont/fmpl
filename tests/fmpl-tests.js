@@ -19,6 +19,10 @@ describe('fmpl', () => {
 		fmpl = new Fmpl();
 	});
 
+	it('should allow "%} in verbatom', () => {
+		expect(renderToString('hello %}')).to.equal('hello %}');
+	});
+
 	it('should render variable value', () => {
 		expect(renderToString('{{ foo }}', { foo: 'bar' })).to.equal('bar');
 	});
@@ -116,6 +120,87 @@ describe('fmpl', () => {
 		const text = 'foo {% include lol %} bar {% block datblock %}hello world{% endblock %}';
 		expect(() => fmpl.compile(text)).to.throwError((err) => {
 			expect(err).to.have.property('message', 'Unable to resolve template for include path "lol"');
+		});
+	});
+
+	it('should allow disabling the default resolver', () => {
+		const file = path.join(__dirname, 'includes', 'yarp.txt');
+		const text = `{% include ${file} %}`;
+		fmpl.defaultResolver = null;
+		expect(() => fmpl.compile(text)).to.throwError((err) => {
+			expect(err).to.have.property('message', `Unable to resolve template for include path "${file}"`);
+		});
+	});
+
+	it('should blow up if "{" occurs at the end of a tag block', () => {
+		const text = '{% endif { %}';
+		expect(() => fmpl.compile(text)).to.throwError((err) => {
+			expect(err).to.have.property('message', 'expected %} but got {');
+		});
+	});
+
+	it('should blow up if "}" occurs at the end of a tag block', () => {
+		const text = '{% endif } %}';
+		expect(() => fmpl.compile(text)).to.throwError((err) => {
+			expect(err).to.have.property('message', 'expected %} but got }');
+		});
+	});
+
+	it('should blow up if "%" occurs at the end of a tag block without a following "}"', () => {
+		const text = '{% endif % %}';
+		expect(() => fmpl.compile(text)).to.throwError((err) => {
+			expect(err).to.have.property('message', 'expected %} but got % ');
+		});
+	});
+
+	it('should blow up if an unknown tag is used', () => {
+		const text = '{% lol %}';
+		expect(() => fmpl.compile(text)).to.throwError((err) => {
+			expect(err).to.have.property('message', 'Unknown tag: "lol"');
+		});
+	});
+
+	it('should blow up if random character occurs before tag end', () => {
+		const text = '{% endfor a %}';
+		expect(() => fmpl.compile(text)).to.throwError((err) => {
+			expect(err).to.have.property('message', 'expected %} but got "a"');
+		});
+	});
+
+	it('should allow percent sign in verbatim', () => {
+		const text = '100%';
+		expect(renderToString(text)).to.equal('100%');
+	});
+
+	it('should allow whitespace occurs before tag end', () => {
+		const text = '{% if true %}{% endif \n\t  %}';
+		expect(renderToString(text)).to.equal('');
+	});
+
+	it('should compile from file', (done) => {
+		const file = path.join(__dirname, 'includes', 'tmpl.txt');
+		fmpl.compileFile(file, (err, tmpl) => {
+			expect(err).to.be(null);
+			expect(tmpl()).to.equal('hello world\n');
+			done();
+		});
+	});
+
+	it('should compile from file and handle compilation error', (done) => {
+		const file = path.join(__dirname, 'includes', 'bad.txt');
+		fmpl.compileFile(file, (err, tmpl) => {
+			expect(err).to.not.be(null);
+			expect(tmpl).to.be(null);
+			done();
+		});
+	});
+
+	it('should compile from file and handle fs error', (done) => {
+		const file = path.join(__dirname, 'includes', 'narp.txt');
+		fmpl.compileFile(file, (err, tmpl) => {
+			expect(err).to.not.be(null);
+			expect(tmpl).to.not.be.ok();
+			done();
 		});
 	});
 });
