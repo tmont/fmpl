@@ -1,17 +1,17 @@
 'use strict';
 
-const expect = require('expect.js');
-const path = require('path');
-const Fmpl = require('../');
+import expect from 'expect.js';
+import * as path from 'path';
+import {Fmpl, FmplFn} from '../index';
 
 describe('fmpl', () => {
-	let fmpl;
+	let fmpl: Fmpl;
 
-	function renderToString(tmpl, values) {
+	function renderToString(tmpl: string, values?: any): string {
 		return Fmpl.render(tmpl, values);
 	}
 
-	function compile(tmpl) {
+	function compile(tmpl: string): FmplFn {
 		return Fmpl.compile(tmpl);
 	}
 
@@ -19,7 +19,7 @@ describe('fmpl', () => {
 		fmpl = new Fmpl();
 	});
 
-	it('should allow "%} in verbatom', () => {
+	it('should allow "%} in verbatim', () => {
 		expect(renderToString('hello %}')).to.equal('hello %}');
 	});
 
@@ -193,7 +193,8 @@ describe('fmpl', () => {
 		const file = path.join(__dirname, 'includes', 'tmpl.txt');
 		fmpl.compileFile(file, (err, tmpl) => {
 			expect(err).to.be(null);
-			expect(tmpl()).to.equal('hello world\n');
+			expect(tmpl).to.not.be(null);
+			expect(tmpl!()).to.equal('hello world\n');
 			done();
 		});
 	});
@@ -202,7 +203,8 @@ describe('fmpl', () => {
 		const file = path.join(__dirname, 'includes', 'includes-yarp.txt');
 		fmpl.compileFile(file, (err, tmpl) => {
 			expect(err).to.be(null);
-			expect(tmpl()).to.equal('yarp\n\n');
+			expect(tmpl).to.not.be(null);
+			expect(tmpl!()).to.equal('yarp\n\n');
 			done();
 		});
 	});
@@ -211,7 +213,7 @@ describe('fmpl', () => {
 		const file = path.join(__dirname, 'includes', 'bad.txt');
 		fmpl.compileFile(file, (err, tmpl) => {
 			expect(err).to.not.be(null);
-			expect(tmpl).to.be(null);
+			expect(tmpl).to.be(undefined);
 			done();
 		});
 	});

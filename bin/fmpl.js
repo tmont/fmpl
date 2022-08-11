@@ -2,7 +2,7 @@
 
 const start = Date.now();
 const fs = require('fs');
-const Fmpl = require('../');
+const {Fmpl} = require('../');
 
 const usage = `fmpl [--verbose|-v] [--help|-h] [file] [file...]
 

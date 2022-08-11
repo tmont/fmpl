@@ -15,17 +15,40 @@
 
 	"files": [
 		"bin/fmpl.js",
-		"index.js"
+		"dist/index.js",
+		"dist/index.d.ts"
 	],
 
+	"typings": "dist/index.d.ts",
+	"main": "dist/index.js",
+
 	"scripts": {
-		"test": "node_modules/.bin/mocha -R dot --recursive tests",
-		"coverage": "node_modules/.bin/nyc --include index.js --all --reporter=html --reporter=text npm test"
+		"test": "node_modules/.bin/mocha",
+		"coverage": "node_modules/.bin/nyc --reporter text mocha",
+		"build": "node_modules/.bin/tsc"
 	},
 
 	"devDependencies": {
-		"mocha": "3.2.0",
+		"@istanbuljs/nyc-config-typescript": "1.0.2",
+		"@types/expect.js": "0.3.29",
+		"@types/node": "18.7.1",
+		"@types/mocha": "9.1.1",
+		"mocha": "10.0.0",
 		"expect.js": "0.3.1",
-		"nyc": "10.2.0"
+		"nyc": "15.1.0",
+		"source-map-support": "0.5.21",
+		"ts-node": "10.9.1",
+		"typescript": "4.7.4"
+	},
+
+	"mocha": {
+		"extension": [ "ts" ],
+		"require": [
+			"ts-node/register",
+			"source-map-support/register"
+		],
+		"reporter": "dot",
+		"recursive": true,
+		"spec": "tests/*.ts"
 	}
 }

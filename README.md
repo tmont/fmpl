@@ -35,7 +35,8 @@ library for you.
 
 ## Usage
 ```javascript
-const Fmpl = require('fmpl');
+const {Fmpl} = require('fmpl');
+import {Fmpl} from 'fmpl'; // typescript
 
 //fancy usage
 const fmpl = new Fmpl();
